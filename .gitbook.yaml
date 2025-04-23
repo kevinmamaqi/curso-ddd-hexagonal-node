@@ -1,0 +1,6 @@
+root: ./
+structure:
+  ignore:
+    - "project/**"
+    - "node_modules/**"
+    - ".github/**"

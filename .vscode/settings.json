@@ -1,0 +1,15 @@
+// .vscode/settings.json
+{
+  "eslint.validate": ["javascript", "typescript", "typescriptreact"],
+  "eslint.workingDirectories": [
+    { "mode": "auto" },
+    "./services/inventory-service",
+    "./services/order-service",
+    "./clients/inventory-api",
+    "./clients/order-api"
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always"
+  },
+  "editor.formatOnSave": false
+}

@@ -1,0 +1,118 @@
+version: "3.9"
+services:
+  # PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    env_file: ./.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ
+  rabbit:
+    image: rabbitmq:3.13-management
+    env_file: ./.env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD","rabbitmq-diagnostics","status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus (metrics)
+  prometheus:
+    image: prom/prometheus:v3.3.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  # Loki (logs)
+  loki:
+    image: grafana/loki:3.5.0
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki-config.yaml:/etc/loki/local-config.yaml:ro
+    ports:
+      - "3100:3100"
+
+  # Tempo (traces)
+  tempo:
+    image: grafana/tempo:2.7.2
+    command: -config.file=/etc/tempo/local-config.yaml
+    volumes:
+      - ./tempo-config.yaml:/etc/tempo/local-config.yaml:ro
+    ports:
+      - "3200:3200"
+
+  # Grafana UI
+  grafana:
+    image: grafana/grafana:11.6.1
+    user: "472"
+    env_file: ./.env
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+
+  # Inventory Domain Service
+  inventory-service:
+    build: ./services/inventory-service
+    env_file: ./services/inventory-service/.env
+    ports:
+      - "${INVENTORY_SERVICE_PORT}:3000"
+    depends_on:
+      - postgres
+      - rabbit
+
+  # Order Domain Service
+  order-service:
+    build: ./services/order-service
+    env_file: ./services/order-service/.env
+    ports:
+      - "${ORDER_SERVICE_PORT}:3000"
+    depends_on:
+      - postgres
+      - rabbit
+
+  # Inventory Client API
+  inventory-api:
+    build: ./clients/inventory-api
+    env_file: ./clients/inventory-api/.env
+    ports:
+      - "${INVENTORY_API_PORT}:4001"
+    depends_on:
+      - inventory-service
+
+  # Order Client API
+  order-api:
+    build: ./clients/order-api
+    env_file: ./clients/order-api/.env
+    ports:
+      - "${ORDER_API_PORT}:4002"
+    depends_on:
+      - order-service
+
+volumes:
+  grafana-data:

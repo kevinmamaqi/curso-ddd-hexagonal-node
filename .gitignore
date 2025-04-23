@@ -1,1 +1,4 @@
-guia.txt
+node_modules
+dist
+cheatsheet.md
+scripts/
