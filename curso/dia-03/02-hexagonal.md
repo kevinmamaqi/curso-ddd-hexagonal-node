@@ -11,7 +11,7 @@
 - El servicio compila (`npm run build`) y arranca (`npm run dev`) sin errores.  
 - Prisma está configurado y la tabla `Inventory` existe en tu base de datos.  
 
-### 1.2 Abre el proyecto en tu IDE y confirma que la estructura de carpetas es la siguiente:
+### 1.2 Abre el proyecto en tu IDE y confirma que la estructura de carpetas es similar a la siguiente:
 
 ```
 project/services/inventory-service/  
@@ -176,30 +176,3 @@ describe('InventoryRepositoryPostgres - Integration', () => {
   })  
 })
 ```
-
----
-
-## 6. Script de CI y Docker Compose
-
-En tu `docker-compose.yml`, añade un servicio `inventory-test`:
-
-```yaml
-  inventory-test:  
-    build: ./services/inventory-service  
-    command: sh -c "npm ci && npm run build && npm test"  
-    depends_on:  
-      - postgres
-```
-
-Esto permite que `docker-compose up --build --exit-code-from inventory-test` valide todo el hexágono en CI.
-
----
-
-## 7. Checklist de cierre
-
-- [ ] InMemory adapter implementado y registrado correctamente.  
-- [ ] Tests unitarios de UseCase pasan sin Postgres.  
-- [ ] Tests de integración con Postgres en memoria pasan.  
-- [ ] Docker Compose con script de test ejecuta sin errores.
-
-Con esto habrás completado tu primer hexágono probado y listo para avanzar a modelado DDD estratégico en la próxima sesión.

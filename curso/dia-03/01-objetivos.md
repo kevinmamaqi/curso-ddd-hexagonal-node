@@ -1,27 +1,27 @@
 # Sesión 3 · 07-may-2025  
+
 ## Objetivos del día
 
-| # | Objetivo concreto                                             | ¿Por qué importa?                                                        |
-|---|---------------------------------------------------------------|---------------------------------------------------------------------------|
-| 1 | Identificar y delimitar Bounded Contexts en un dominio        | Evita ambigüedades semánticas y reduce el riesgo de deuda técnica futura. |
-| 2 | Mapear relaciones entre contextos (Partnership, Customer/Supplier, ACL) | Garantiza acuerdos claros entre equipos y define contratos de integración. |
-| 3 | Implementar un ejemplo de Anticorruption Layer (ACL) entre dominios | Aísla tu modelo de negocio de cambios en sistemas externos.               |
-| 4 | Revisar y reforzar separación de responsabilidades (Dominio, Aplicación, Infra) | Mantiene cada capa enfocada en su propósito y facilita la mantenibilidad. |
-| 5 | Aplicar las buenas prácticas de DIP vistas (Constructor injection, Null Object) | Refuerza inmutabilidad y testabilidad en los Use Cases y adapters.        |
+| # | Objetivo concreto                                                  | ¿Por qué importa?                                                            |
+|---|--------------------------------------------------------------------|-------------------------------------------------------------------------------|
+| 1 | Consolidar conocimientos sobre arquitectura hexagonal vistos ayer | Asegura una base sólida para diseñar servicios desacoplados y mantenibles.   |
+| 2 | Completar la estructura base del `inventory-service`               | Permite aplicar conceptos aprendidos en un caso real y funcional.            |
+| 3 | Definir límites del dominio del inventario                        | Facilita la comprensión del modelo y previene errores de diseño.             |
+| 4 | Configurar infraestructura básica (Docker, eventos, dependencias) | Prepara el servicio para su integración con otros contextos del sistema.     |
+| 5 | Validar aplicación de DIP y separación de capas en el servicio    | Garantiza un diseño limpio, testeable y orientado a largo plazo.             |
 
 ---
 
 ## Relación con el Proyecto Final
 
-Hoy avanzamos el **inventory-service** definiendo límites del dominio y configurando la infraestructura para futuros intercambios de eventos y servicios externos.
+El foco de hoy es aplicar lo aprendido sobre arquitectura hexagonal para desarrollar un `inventory-service` bien estructurado, preparando su dominio e infraestructura para futuras integraciones y eventos.
 
 ---
 
 ## Requisitos antes de empezar
 
-- Código de Sesión 2 completamente funcional  
-- Contenedores up (`docker compose up -d`)  
-- Entender los conceptos de Ports & Adapters y DI con Awilix  
-- VS Code con ESLint y TypeScript sin errores  
+- Código de la Sesión 2 clonado en local
+- Comprensión de Ports & Adapters y DI con Awilix  
+- VS Code sin errores de ESLint ni TypeScript  
 
-Con estos objetivos claros, comenzamos la Sesión 3 centrados en los límites del dominio y la integración segura entre contextos. ¡Vamos allá!
+Con estos cimientos, entramos en la Sesión 3 enfocados en reforzar el aprendizaje anterior y avanzar con un servicio concreto. ¡A por ello!

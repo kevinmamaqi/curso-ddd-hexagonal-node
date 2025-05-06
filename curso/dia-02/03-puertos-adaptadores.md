@@ -104,6 +104,7 @@ export async function registerInventoryRoutes(app: FastifyInstance) {
   app.post("/inventory/:sku/reserve", async (req, reply) => {
     const { sku } = req.params as { sku: string };
     const { qty } = req.body as { qty: number };
+    // Ejemplo de Lógica de negocio en el adaptador. EVITAR!!!
     if (!sku || qty <= 0) {
       return reply
         .status(400)
@@ -142,8 +143,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
 | Anti-patrón         | Riesgo                                  | Solución recomendada                        |
 | ------------------- | --------------------------------------- | ------------------------------------------- |
-| Fat Adapter         | Mezcla lógica de negocio en controllers | Extraer lógica a UseCases / Domain Services |
-| Domain HUD          | Logging/tracing directo en entidades    | Inyectar un LoggerPort en adaptadores       |
+| Fat Adapter         | Mezcla lógica de negocio en controllers. Ver Punto 4. | Extraer lógica a UseCases / Domain Services |
+| Domain (Head Up Display) HUD          | Logging/tracing directo en entidades    | Inyectar un LoggerPort en adaptadores       |
 | Anonymous Interface | Usar any para puertos, perdiendo tipado | Definir interfaces específicas y pequeñas   |
 
 ## 7. Buenas prácticas
