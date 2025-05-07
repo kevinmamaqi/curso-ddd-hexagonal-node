@@ -1,10 +1,18 @@
 // src/main.ts
 import Fastify from "fastify";
 import "dotenv/config";
+import { container } from "./application/container";
+import { registerInventoryRoutes } from "./infrastructure/http/ProductInventoryRouter";
 
 export async function buildServer() {
   const app = Fastify({ logger: true });
-  // TODO: registrar rutas, plugins, etc.
+
+  //   Initialize container
+  await container.dispose();
+
+  //   Application routes
+  await registerInventoryRoutes(app);
+
   app.get("/health", async () => ({ status: "ok" }));
   return app;
 }

@@ -1,6 +1,6 @@
-import { ProductInventory } from "../model/InventoryModel";
+import { ProductInventory } from "../model/ProductInventoryModel";
 
-export default interface InventoryPort {
+export interface ProductInventoryPort {
   save(inventory: ProductInventory): Promise<void>;
   getBySku(sku: string): Promise<ProductInventory | null>;
 }
