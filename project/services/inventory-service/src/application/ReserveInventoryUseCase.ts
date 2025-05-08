@@ -1,7 +1,12 @@
-import { ProductInventoryPort } from "../domain/ports/ProductInventoryPort";
+import { Quantity } from "../domain/value-objects/Quantity";
+import { ProductInventoryPort } from "../domain/ports/ProductInventoryRepositoryPort";
+import { ProductInventoryEventsPort } from "../domain/ports/ProductInventoryEventsPort";
 
 export class ReserveInventoryUseCase {
-  constructor(private readonly inventoryRepo: ProductInventoryPort) {}
+  constructor(
+    private readonly inventoryRepo: ProductInventoryPort,
+    private readonly productInventoryEvents: ProductInventoryEventsPort
+  ) {}
 
   async exec(sku: string, qty: number): Promise<void> {
     const inventory = await this.inventoryRepo.getBySku(sku);
@@ -9,7 +14,13 @@ export class ReserveInventoryUseCase {
       throw new Error("Product not found");
     }
 
-    inventory.reserve(qty);
+    const qtyObj = Quantity.of(qty);
+
+    inventory.reserve(qtyObj);
     await this.inventoryRepo.save(inventory);
+    await this.productInventoryEvents.emitProductInventoryReserved(
+      inventory.sku,
+      qtyObj
+    );
   }
 }

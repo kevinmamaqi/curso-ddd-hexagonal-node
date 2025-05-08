@@ -29,8 +29,8 @@
 
 * **Día 05 – DDD Avanzado**
   * [00 · Repaso](curso/dia-05/00-repaso.md)
-  * [01 · DDD Avanzado](curso/dia-05/01-ddd-avanzado.md)
-  * [02 · Patrones Tácticos](curso/dia-05/02-ddd-patrones-tacticos.md)
+  * [01 · Objetivos](curso/dia-05/01-objetivos.md)
+  * [02 · DDD Avanzado](curso/dia-05/02-ddd-avanzado.md)
   * [03 · Avance Proyecto](curso/dia-05/03-avance-proyecto.md)
 
 * **Día 06 – CQRS (Parte 1)**

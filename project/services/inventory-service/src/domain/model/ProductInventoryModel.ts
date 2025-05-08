@@ -1,9 +1,11 @@
-// representa el inventario de un producto
+import { Quantity } from "../value-objects/Quantity";
+import { SKU } from "../value-objects/SKU";
+
 export class ProductInventory {
-  readonly sku: string; // sku de un producto
+  readonly sku: SKU;
   private available: number;
 
-  constructor(sku: string, available: number) {
+  constructor(sku: SKU, available: number) {
     if (available < 0)
       throw new Error("Available shoud be equal or higher than 0.");
 
@@ -11,10 +13,11 @@ export class ProductInventory {
     this.available = available;
   }
 
-  reserve(qty: number) {
-    if (qty < 0) throw new Error("Quantity must be positive.");
-    if (this.available < qty) throw new Error("Insifficient product stock");
-    this.available -= qty;
+  reserve(qty: Quantity) {
+    const qtyNumber = qty.toNumber();
+    if (this.available < qtyNumber)
+      throw new Error("Insifficient product stock");
+    this.available -= qtyNumber;
   }
 
   getAvailable(): number {

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { ProductInventory } from "../../domain/model/ProductInventoryModel";
-import { ProductInventoryPort } from "../../domain/ports/ProductInventoryPort";
+import { ProductInventoryPort } from "../../domain/ports/ProductInventoryRepositoryPort";
 
 export class ProductInventoryAdapter implements ProductInventoryPort {
   constructor(private readonly prisma: PrismaClient) {}
