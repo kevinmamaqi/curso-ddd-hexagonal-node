@@ -7,6 +7,22 @@
 
 ---
 
+### 📄 Licencia
+
+Este contenido está disponible públicamente para su consulta y aprendizaje, pero **no puede ser reutilizado, modificado ni distribuido con fines comerciales** sin autorización expresa del autor.
+
+**Licencia**: [Creative Commons Atribución-NoComercial-SinDerivadas 4.0 Internacional (CC BY-NC-ND 4.0)](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es)
+
+Esto significa:
+
+- ✅ Puedes ver, descargar y compartir el material con atribución al autor.
+- ❌ No puedes modificarlo, adaptarlo ni crear obras derivadas.
+- ❌ No puedes utilizarlo con fines comerciales (como cursos, bootcamps, o formación interna).
+
+Para usos distintos a los permitidos por esta licencia, contacta al autor.
+
+---
+
 ## 📚 Estructura del repositorio
 
 ```
@@ -117,13 +133,6 @@ Dashboard “Business KPIs” ya muestra **GMV** y latencia `order_latency_secon
 2. Crea rama `feat/<nombre>` o `fix/<issue>`  
 3. Commits con Conventional Commits  
 4. Abre **draft PR** — revisión en vivo durante el curso  
-
----
-
-## 🪧 Licencia
-
-Código y material didáctico: **MIT**  
-Diagramas C4 generados con Structurizr DSL: **CC-BY-4.0**
 
 ---
 
