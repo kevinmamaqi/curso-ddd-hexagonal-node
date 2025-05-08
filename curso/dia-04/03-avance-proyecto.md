@@ -1,4 +1,4 @@
-# 04-avance-proyecto · Inventory Service – Sesión 4
+# 03-avance-proyecto · Inventory Service – Sesión 4
 
 Objetivo: definir el dominio de inventario en términos de negocio, identificar conceptos clave y traducirlos a componentes DDD dentro de inventory-service.
 
@@ -7,10 +7,8 @@ Objetivo: definir el dominio de inventario en términos de negocio, identificar 
 ## 1. Contexto de negocio
 
 ### 1.1 Descripción general  
-Nuestro cliente es una plataforma de e-commerce que vende productos físicos.  
-Necesita garantizar que cada pedido solo se acepte si hay suficiente stock,  
-evitar sobreventa (overselling) y permitir reposición automática cuando  
-el inventario sea bajo.
+Nuestro cliente es una plataforma de e-commerce que vende productos físicos. 
+Necesita garantizar que cada pedido solo se acepte si hay suficiente stock, evitar sobreventa (overselling) y permitir reposición automática cuando el inventario sea bajo.
 
 ### 1.2 Necesidades críticas del cliente
 
@@ -72,26 +70,8 @@ El Inventory Context queda aislado dentro de inventory-service:
 
 ## 6. Puertos (Ports)
 
-Puerto de Repositorio
-
-```ts
-src / domain / ports / InventoryRepositoryPort.ts;
-import { ProductInventory } from "../model/ProductInventory";
-export interface InventoryRepositoryPort {
-  findBySku(sku: string): Promise<ProductInventory | null>;
-  save(inventory: ProductInventory): Promise<void>;
-}
-```
-
-Puerto de Event Bus
-
-```ts
-src / domain / ports / InventoryEventPort.ts;
-import { DomainEvent } from "../../shared/domain/DomainEvent";
-export interface InventoryEventPort {
-  publish(events: DomainEvent[]): Promise<void>;
-}
-```
+- Mejorar InventoryProductPort
+- Implementar InventoryEventPort
 
 ---
 
@@ -104,6 +84,25 @@ export interface InventoryEventPort {
 | ReplenishStockUseCase | Añade unidades, emite StockReplenished             |
 | GetInventoryUseCase   | Recupera cantidad actual para un SKU               |
 
+
+ReserveStockUseCase:
+
+```mermaid
+sequenceDiagram
+    participant API as Inventory API
+    participant UseCase as ReserveStockUseCase
+    participant Aggregate as ProductInventory
+    participant Repo as InventoryRepository
+    
+    API->>UseCase: { sku: 'ABC-1234-XY', qty: 5 }
+    UseCase->>Repo: findBySku('ABC-1234-XY')
+    Repo-->>UseCase: ProductInventory
+    UseCase->>Aggregate: reserve(Quantity.of(5))
+    Aggregate->>Aggregate: Valida stock
+    Aggregate->>Aggregate: Actualiza estado
+    UseCase->>Repo: save(inventory)
+    UseCase->>EventPort: emit StockReserved
+```
 ---
 
 ## 8. Contrato de API (inventory-api)
@@ -115,15 +114,4 @@ export interface InventoryEventPort {
 | POST   | /inventory/:sku/release   | { qty: number, orderId: string } | 204 No Content     |
 | POST   | /inventory/:sku/replenish | { qty: number }                  | 204 No Content     |
 
----
 
-## 9. Tareas prácticas para hoy
-
- 1. Modelar dominio: crear Quantity y ProductInventory con los comportamientos definidos.
- 2. Definir puertos: InventoryRepositoryPort e InventoryEventPort.
- 3. Implementar Use Cases: ReserveStockUseCase y ReplenishStockUseCase.
- 4. Escribir pruebas unitarias: para cada Use Case usando in-memory adapter.
- 5. Actualizar API: añadir rutas en inventory-api según el contrato.
- 6. Emitir eventos: integrar InventoryEventPort en los Use Cases para publicar eventos.
-
-Al finalizar, el servicio cubrirá reserva y reposición, reflejado en tests y listo para integrarse con order-service y la capa de eventos.

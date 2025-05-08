@@ -1,12 +1,74 @@
-# Tema 4 (parte 2) — Del Modelo Anémico al Modelo Rico
+# Tema 4 — Fundamentos de DDD y transición al Modelo Rico
 
-Objetivo: comprender por qué el modelo anémico dificulta la evolución del software y cómo un dominio rico encapsula reglas, invariantes y comportamientos dentro de las entidades.
+## Introducción a los pilares estratégicos de DDD
+
+Antes de abordar los modelos de dominio, es crucial entender los cimientos que hacen posible el diseño guiado por el dominio:
+
+```mermaid
+flowchart TD
+    A[Lenguaje Ubicuo] --> B(Subdominios)
+    A --> C(Bounded Contexts)
+    B --> D[Core]
+    B --> E[Soporte]
+    B --> F[Genérico]
+    C --> G[Límites explícitos]
+    C --> H[Modelos autocontenidos]
+    D --> I[Innovación diferencial]
+    E --> J[Apoya al Core]
+    F --> K[Comodities estandarizados]
+```
+
+## 1. Lenguaje Ubicuo: La columna vertebral de DDD
+
+¿Qué es? Un vocabulario compartido entre expertos de negocio y desarrolladores
+
+Patrones clave:
+- Glosario de términos técnicos-negocio (ej: Pedido = Order agregado con Items)
+- Diagramas que reflejan lenguaje de negocio (no solo UML técnico)
+- Documentación viva en el código (tipos, métodos y tests con nombres de dominio)
+
+## 2. Subdominios: Mapeando la complejidad organizacional
+
+| Tipo | Características | Ejemplo en e-commerce |
+|------|----------------|----------------------|
+| Core | Ventaja competitiva única | Sistema de recomendaciones AI |
+| Soporte | Necesario pero no diferenciador | Gestión de inventario |
+| Genérico | Problemas comunes ya resueltos | Pasarela de pagos |
+
+## 3. Bounded Contexts: Fronteras de significado
+
+Principio: "Un término no puede significar dos cosas en el mismo contexto"
+
+Implementación técnica:
+- Microservicios con APIs bien definidas
+- Módulos/librerías con responsabilidades acotadas
+- Eventos de dominio con semántica contextual
+
+## 4. Transición estratégica -> Táctico
+Estos pilares estratégicos nos llevan naturalmente a implementaciones tácticas:
+
+```mermaid
+flowchart LR  
+    A[Lenguaje Ubicuo] --> B[Entidades]  
+    C[Subdominios] --> D[Agregados]  
+    E[Bounded Contexts] --> F[Microservicios]  
+    B --> G[Comportamientos encapsulados]  
+    D --> H[Límites transaccionales]  
+    F --> I[Contextos desacoplados]  
+```
+
+Flujo de diseño recomendado:
+- Identificar subdominios clave con expertos de negocio.
+- Delimitar Bounded Contexts para cada subdominio.
+- Modelar agregados y entidades usando el Lenguaje Ubicuo.
+- Implementar comportamientos ricos que reflejen reglas de negocio.
 
 ---
 
-## 1. El problema del “Anemic Domain Model”
+## 5. El problema del "Anemic Domain Model"
 
-En el modelo anémico la lógica de negocio se dispersa en servicios, controladores o scripts SQL. La entidad es sólo un contenedor de datos sin comportamiento.
+Objetivo: Comprender por qué el modelo anémico dificulta la evolución del software y cómo un dominio rico encapsula reglas, invariantes y comportamientos dentro de las entidades.
+
 
 Ejemplo en `order-service`:
 
@@ -27,17 +89,17 @@ export const saveOrder = async (db, row: OrderRow) => {
 **Problemas principales:**  
 - Imposible garantizar invariantes (ej. que qty > 0, status sólo permitido).  
 - Tests caros (requieren base de datos o mocks de servicios).  
-- Refactors que conllevan riesgos: si cambias la tabla o el DTO rompes toda la lógica.
+- Refactors que **conllevan** riesgos: si cambias la tabla o el DTO rompes toda la lógica.
 
 Referencia: Martin Fowler, “Anemic Domain Model” – https://martinfowler.com/bliki/AnemicDomainModel.html
 
 ---
 
-## 2. Refactor a un Domain Model Rico
+## 6. Refactor a un Domain Model Rico
 
 Un **modelo rico** coloca la lógica de negocio dentro de las propias entidades y agregados. Así cada objeto sabe cómo validarse y comportarse.
 
-### 2.1 Value Object: Quantity
+### 6.1 Value Object: Quantity
 
 ```ts
 // src/domain/value-objects/Quantity.ts  
@@ -60,7 +122,7 @@ export class Quantity {
 }
 ```
 
-### 2.2 Entity y Aggregate Root: Order
+### 6.2 Entity y Aggregate Root: Order
 
 ```ts
 // src/domain/entities/OrderItem.ts  
@@ -118,22 +180,32 @@ export class Order {
 }
 ```
 
-### 2.3 Diagrama de flujo de comportamiento
+### 6.3 Diagrama de flujo de comportamiento
 
 ```mermaid
-flowchart TD  
-    subgraph OrderAggregate  
-      O1[addItem(sku, qty, price)]  
-      O2[pay()]  
-      O3[total()]  
-    end  
-    O1 --> O3  
-    O2 --> O3  
+flowchart TB
+  subgraph OrderAggregate["Order Aggregate"]
+    direction TB
+    A["id: string"]
+    B["items: OrderItem[]"]
+    C["status: PENDING or PAID"]
+    D["addItem(sku, qty, price)"]
+    E["pay()"]
+    F["total(): number"]
+  end
+
+  D --> Q["Quantity.of(qty)"]
+  D --> P["priceCents = round(price * 100)"]
+  Q --> N["new OrderItem(sku, qty, priceCents)"]
+  N --> B
+
+  E --> C
+  B --> F
 ```
 
 ---
 
-## 3. Puerto de Persistencia
+## 7. Puerto de Persistencia
 
 Para mantener el dominio independiente de la base de datos, definimos un puerto en `order-service`:
 
@@ -151,7 +223,7 @@ Así la infraestructura (Postgres, Mongo, Redis) implementará este contrato sin
 
 ---
 
-## 4. Comparativa rápida
+## 8. Comparativa rápida
 
 Métrica                 | Modelo anémico                 | Modelo rico  
 ------------------------|--------------------------------|---------------------------------  
@@ -162,7 +234,7 @@ Legibilidad del código  | Bajo                            | Alto, código autoe
 
 ---
 
-## 5. Migración gradual y segura
+## 9. Migración gradual y segura
 
 1. **Paralelismo**: crea las nuevas clases (`Order`, `OrderItem`, `Quantity`) sin eliminar aún el código anémico.  
 2. **Cobertura de tests**: añade tests unitarios para cada método crítico (`addItem`, `pay`, `total`).  
@@ -172,27 +244,7 @@ Legibilidad del código  | Bajo                            | Alto, código autoe
 
 ---
 
-## 6. Ejercicio guiado: enriquecer `order-service`
-
-En esta sesión trabajaremos en `order-service`:
-
-1. Implementa las clases `Quantity`, `OrderItem` y `Order` en `src/domain`.  
-2. Define el puerto `OrderRepositoryPort`.  
-3. Refactoriza el UseCase `CreateOrderUseCase` para que:  
-   - Cree un `Order` nuevo,  
-   - Agregue todos los ítems según el DTO recibido,  
-   - Calcule el total usando `order.total()`,  
-   - Persista mediante el puerto.  
-4. Añade rutas en `order-api`:  
-   - POST `/orders` para crear pedidos,  
-   - GET `/orders/:id` para recuperar el estado y total.  
-5. Escribe tests unitarios para el modelo rico y tests de integración ligeros contra Postgres en memoria.  
-
-Commit sugerido: `feat(order): rich domain model + ports + api routes`
-
----
-
 **Referencias**  
-- Fowler, Martin. “AnemicDomainModel” – https://martinfowler.com/bliki/AnemicDomainModel.html  
+- Fowler, Martin. “Anemic Domain Model” – https://martinfowler.com/bliki/AnemicDomainModel.html  
 - Evans, Eric. *Domain-Driven Design* (2003)  
 - Vernon, Vaughn. *Implementing Domain-Driven Design* (2013)  

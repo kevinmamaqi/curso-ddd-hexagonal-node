@@ -25,8 +25,7 @@
   * [00 · Repaso](curso/dia-04/00-repaso.md)
   * [01 · Objetivos](curso/dia-04/01-objetivos.md)
   * [02 · DDD Fundamentos](curso/dia-04/02-ddd-fundamentos.md)
-  * [03 · Modelo Rico](curso/dia-04/03-modelo-rico.md)
-  * [04 · Avance Proyecto](curso/dia-04/04-avance-proyecto.md)
+  * [03 · Avance Proyecto](curso/dia-04/03-avance-proyecto.md)
 
 * **Día 05 – DDD Avanzado**
   * [00 · Repaso](curso/dia-05/00-repaso.md)

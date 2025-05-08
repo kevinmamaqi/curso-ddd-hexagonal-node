@@ -1,4 +1,4 @@
-# Tema 4 (parte 3) — Aggregate Roots, Domain Events y Repositorios
+# Tema 4 - Aggregate Roots, Domain Events y Repositorios
 
 ## 1. Aggregate Root: Principios de diseño
 
