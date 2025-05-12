@@ -37,8 +37,7 @@
   * [00 · Repaso](curso/dia-06/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-06/01-objetivos-del-dia.md)
   * [02 · Fundamentos de CQRS](curso/dia-06/02-cqrs-fundamentos.md)
-  * [03 · Implementación en Node](curso/dia-06/03-cqrs-node-implementacion.md)
-  * [04 · Avance Proyecto](curso/dia-06/04-avance-proyecto.md)
+  * [03 · Avance Proyecto](curso/dia-06/03-avance-proyecto.md)
 
 * **Día 07 – CQRS (Parte 2) + Event Sourcing**
   * [00 · Repaso](curso/dia-07/00-repaso.md)

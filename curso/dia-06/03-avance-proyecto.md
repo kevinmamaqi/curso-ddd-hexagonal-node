@@ -1,18 +1,9 @@
-# Avance Proyecto Final – Sprint #3½
+# Avance Proyecto Final 
 
 ## Meta de hoy
+Separar el modelo de escritura (Command) y lectura (Query) de ProductInventory, usando eventos para sincronizar estados.
 
-- Introducir **CQRS light** en `order-service`.  
-- Crear tabla `order_summary` + endpoint `GET /orders/:id/summary`.
-
-### Tareas
-
-| # | Servicio | Acción | Etiqueta |
-|---|----------|--------|----------|
-| 1 | order | Command `CreateOrder` con Rabbit outbox | `cqrs-create` |
-| 2 | order | Projector `OrderCreated` → `order_summary` | `cqrs-summary` |
-| 3 | order | Query handler + HTTP adapter | `cqrs-query` |
-
-*Deadline:* fin de sesión 7.
-
-> Consejo: partan equipos Command/Query y definan contracts primero (Pact).
+- Crear event store y eventos
+- Refactorizar ProductInventory
+- Crear proyector
+- Simulación de flujo

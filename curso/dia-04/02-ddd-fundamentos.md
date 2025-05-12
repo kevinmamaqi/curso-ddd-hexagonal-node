@@ -6,8 +6,8 @@ Antes de abordar los modelos de dominio, es crucial entender los cimientos que h
 
 ```mermaid
 flowchart TD
-    A[Lenguaje Ubicuo] --> B(Subdominios)
-    A --> C(Bounded Contexts)
+    A[Lenguaje Ubicuo] --> B(Bounded Contexts)
+    A --> C(Subdominios)
     B --> D[Core]
     B --> E[Soporte]
     B --> F[Genérico]
@@ -27,7 +27,7 @@ Patrones clave:
 - Diagramas que reflejan lenguaje de negocio (no solo UML técnico)
 - Documentación viva en el código (tipos, métodos y tests con nombres de dominio)
 
-## 2. Subdominios: Mapeando la complejidad organizacional
+## 2. Bounded Contexts: Mapeando la complejidad organizacional
 
 | Tipo | Características | Ejemplo en e-commerce |
 |------|----------------|----------------------|
@@ -35,7 +35,7 @@ Patrones clave:
 | Soporte | Necesario pero no diferenciador | Gestión de inventario |
 | Genérico | Problemas comunes ya resueltos | Pasarela de pagos |
 
-## 3. Bounded Contexts: Fronteras de significado
+## 3. Subdominios: Fronteras de significado
 
 Principio: "Un término no puede significar dos cosas en el mismo contexto"
 
@@ -50,8 +50,8 @@ Estos pilares estratégicos nos llevan naturalmente a implementaciones tácticas
 ```mermaid
 flowchart LR  
     A[Lenguaje Ubicuo] --> B[Entidades]  
-    C[Subdominios] --> D[Agregados]  
-    E[Bounded Contexts] --> F[Microservicios]  
+    C[Bounded Contexts] --> D[Agregados]  
+    E[Subdominios] --> F[Microservicios]  
     B --> G[Comportamientos encapsulados]  
     D --> H[Límites transaccionales]  
     F --> I[Contextos desacoplados]  
