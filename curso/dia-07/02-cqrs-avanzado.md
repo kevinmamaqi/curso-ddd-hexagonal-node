@@ -1,6 +1,6 @@
 # Tema 5 - CQRS Avanzado
 
-En esta tercera parte profundizaremos en los aspectos avanzados de Event Sourcing, comprendiendo por qué un modelo append-only es clave para auditoría y reconstrucción, cómo optimizar búsquedas en el event store, y qué estrategias seguir para versionar eventos sin perder compatibilidad.
+En esta segunda parte profundizaremos en los aspectos avanzados de Event Sourcing, comprendiendo por qué un modelo append-only es clave para auditoría y reconstrucción, cómo optimizar búsquedas en el event store, y qué estrategias seguir para versionar eventos sin perder compatibilidad.
 
 ## 1. Por Qué Append-Only: Caso del Mundo Real
 
@@ -45,7 +45,7 @@ Reconstuir el estado histórico usando los eventos:
 
 Almacenar millones de eventos requiere estrategias de indexación y particionado que garanticen búsquedas eficaces. Analizaremos cómo aprovechar índices [GIN](https://www.postgresql.org/docs/current/indexes-types.html#:~:text=GIN%20indexes%20are%20%E2%80%9Cinverted%20indexes,presence%20of%20specific%20component%20values.) en PostgreSQL y cómo estructurar el schema para cargas variadas.
 
-**correlationid**: En CQRS y Event Sourcing, correlationId es un identificador único que permite rastrear una operación a través de múltiples componentes del sistema distribuido, especialmente cuando una acción inicial (por ejemplo, un comando) genera múltiples eventos o desencadena otros procesos.
+**correlationId**: En CQRS y Event Sourcing, correlationId es un identificador único que permite rastrear una operación a través de múltiples componentes del sistema distribuido, especialmente cuando una acción inicial (por ejemplo, un comando) genera múltiples eventos o desencadena otros procesos.
 
 **aggregateId**: En CQRS y Event Sourcing, el aggregateId es el identificador único de una instancia de un Aggregate, por ejemplo el id de un usuario o de un pedido. Se diferencia de correlationId en que esta última es un identificador único que permite rastrear una operación a través de múltiples componentes del sistema distribuido, especialmente cuando una acción inicial (por ejemplo, un comando) genera múltiples eventos o desencadena otros procesos.
 
@@ -73,15 +73,46 @@ Este patrón reduce dramáticamente el tiempo de respuesta al buscar dentro de c
 
 **Requisitos**:
 
-1. Manejar múltiples tipos de agregados (Orders, Users, Pagos).
+1. Manejar múltiples tipos de agregados (Orders, Users, Payments).
 2. Búsquedas rápidas por `correlationId` y `aggregateId`.
-3. Compactación mensual de eventos antiguos para archivado.
+3. Compactación mensual de eventos antiguos para archivado. (Ejemplo [PostgreSQL](https://www.postgresql.org/docs/current/ddl-partitioning.html) partitioning)
 
 **Tarea**:
 
 1. Proponer un esquema ajustado que cumpla los requisitos.
 2. Definir los índices necesarios y explicar su elección.
 3. Escribir la consulta SQL para listar todas las órdenes fallidas con un `correlationId` dado.
+
+```sql
+-- TABLE
+CREATE TABLE event_store (
+    id UUID                 PRIMARY KEY,
+    aggregate_type          TEXT NOT NULL, -- orders, users, payments
+    aggregate_id            UUID NOT NULL,
+    payload                 JSONB NOT NULL, -- contiene toda la información del evento, incluido el correlationId
+    created_at              TIMESTAMP WITH TIMEZONE NOT NULL DEFAULT NOW()
+) PARTITION BY RANGE (created_at);
+
+-- IDX AGGREGATE_ID
+CREATE INDEX idx_event_store_aggregate ON event_store (aggregate_id, aggregate_type);
+
+-- IDX CREATED_AT
+CREATE INDEX idx_event_store_created_at ON event_store (created_at DESC);
+
+-- IDX CORRELATION_ID
+CREATE INDEX idx_event_store_correlation_id ON event_store USING GIN ((payload->>'correlationId'))
+
+-- QUERY, correlationId and type OrderFailed
+SELECT * FROM event_store
+WHERE payload->>'correlationId' = '123' AND payload->>'type' = 'OrderFailed';
+
+-- COMPACT TABLE, puede gestionarse mediante cron jobs.
+CREATE TABLE event_store_2025_01 PARTITION of event_store
+FOR VALUES FROM ('2025-01-01') TO ('2025-01-31');
+
+SELECT * FROM event_store
+WHERE created_at >= '2025-01-01' AND created_at =< '2025-01-31';
+```
 
 ---
 
@@ -139,6 +170,50 @@ interface UserAddressChangedV1 {
 1. Definir la interfaz `UserAddressChangedV2`.
 2. Escribir la función migradora de v1 a v2, manejando casos sin coma (e.g. "Street123WithoutComma").
 3. Discutir cómo registrar incidencias de datos inválidos para posterior corrección.
+
+```ts
+// Evento Original
+interface UserAddressChangedV1 {
+    type: 'UserAddressChanged';
+    address: string; // "Street 123, City"
+}
+
+interface UserAddressChangedV2 {
+    type: 'UserAddressChanged';
+    street: string;
+    city: string;
+    postalCode?: string;
+}
+
+const cityMap: Record<string, string> = {
+    'NYC': 'New York City',
+}
+
+function migrateUserAddressChanged(eventV1: UserAddressChangedV1): UserAddressChangedV2 {
+    const data = eventV1.address.split(',').map(s => s.trim(''));
+    let [street, city, postalCode] = data;
+    
+    return {
+        type: eventV1.type,
+        street,
+        city: cityMap[city] || city,
+        postalCode,
+    }
+}
+
+// Como manejar datos invalidos
+if (data.length < 2) {
+    logger.error(`Dirección invalida para: '${eventV1.address}'`);
+    incidentService.report({
+        type: 'InvalidADdressForamt',
+        rawValue: eventV1,
+        correlationId: eventV1.correlationId,
+        timestamp: new Date().UTC()
+    })
+    throw new Error("invalid address");
+}
+
+````
 
 ---
 

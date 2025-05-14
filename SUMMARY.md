@@ -49,15 +49,13 @@
   * [00 · Repaso](curso/dia-08/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-08/01-objetivos-del-dia.md)
   * [02 · Fundamentos de EDA](curso/dia-08/02-eda-fundamentos.md)
-  * [03 · EDA en Node (RabbitMQ)](curso/dia-08/03-eda-node-implementacion.md)
-  * [04 · Avance Proyecto](curso/dia-08/04-avance-proyecto.md)
+  * [03 · Avance Proyecto](curso/dia-08/03-avance-proyecto.md)
 
 * **Día 09 – EDA (Parte 2)**
   * [00 · Repaso](curso/dia-09/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-09/01-objetivos-del-dia.md)
-  * [02 · Errores & Versionado](curso/dia-09/02-eda-errores-versionado.md)
-  * [03 · Monitoring con OTel](curso/dia-09/03-eda-monitoring-otel.md)
-  * [04 · Avance Proyecto](curso/dia-09/04-avance-proyecto.md)
+  * [02 · EDA Práctico](curso/dia-09/02-eda-practico.md)
+  * [03 · Avance Proyecto](curso/dia-09/03-avance-proyecto.md)
 
 * **Día 10 – Observabilidad**
   * [00 · Repaso](curso/dia-10/00-repaso.md)
