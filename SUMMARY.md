@@ -39,12 +39,11 @@
   * [02 · Fundamentos de CQRS](curso/dia-06/02-cqrs-fundamentos.md)
   * [03 · Avance Proyecto](curso/dia-06/03-avance-proyecto.md)
 
-* **Día 07 – CQRS (Parte 2) + Event Sourcing**
+* **Día 07 – CQRS (Parte 2)**
   * [00 · Repaso](curso/dia-07/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-07/01-objetivos-del-dia.md)
-  * [02 · Event Sourcing Avanzado](curso/dia-07/02-event-sourcing-avanzado.md)
-  * [03 · Sagas y Process Manager](curso/dia-07/03-sagas-process-manager.md)
-  * [04 · Avance Proyecto](curso/dia-07/04-avance-proyecto.md)
+  * [02 · CQRS Avanzado](curso/dia-07/02-cqrs-avanzado.md)
+  * [03 · Avance Proyecto](curso/dia-07/03-avance-proyecto.md)
 
 * **Día 08 – EDA (Parte 1)**
   * [00 · Repaso](curso/dia-08/00-repaso.md)

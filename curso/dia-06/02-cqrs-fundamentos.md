@@ -1,8 +1,7 @@
-# Tema 5 (parte 1) — CQRS: Conceptos y Beneficios  
+# Tema 5 — CQRS: Fundamentos
 
 En este primer bloque de **CQRS** nos centraremos en los fundamentos esenciales que toda arquitectura debe contemplar antes de incorporar patrones más avanzados. Sin rodeos, analizaremos por qué dividir lecturas y escrituras, cómo se relacionan sus componentes clave y cómo se materializa este enfoque en un ejemplo real de dominio.
  
-
 ## 0. Dinámica Inicial: "El Dilema del Modelo Único"
 **Actividad Grupal**:  
 
