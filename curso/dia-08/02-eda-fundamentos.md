@@ -101,9 +101,9 @@ end
 
 | **Ventaja** | **Desafío** |
 | ----------- | ----------- |
-|             |             |
-|             |             |
-
+| Escalabilidad Independiente | Trazabilidad            |
+| Resiliencia ante fallos            | Consistencia Eventual            |
+| Time to market            | Coordinación de eventos            |
 ---
 
 ### 1. Anatomía de un Sistema EDA
