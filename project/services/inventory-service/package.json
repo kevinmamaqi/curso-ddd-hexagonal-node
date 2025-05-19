@@ -7,7 +7,9 @@
     "start": "node dist/main.js",
     "dev": "tsx watch src/main.ts",
     "test": "jest",
-    "migrate": "tsx scripts/migrate.ts"
+    "test:coverage": "jest --coverage",
+    "migrate": "tsx scripts/migrate.ts",
+    "mutate": "stryker run --incremental"
   },
   "dependencies": {
     "@prisma/client": "^6.6.0",
@@ -18,6 +20,7 @@
     "prisma": "^6.6.0"
   },
   "devDependencies": {
+    "@stryker-mutator/jest-runner": "^9.0.1",
     "@testcontainers/postgresql": "10.25.0",
     "@types/jest": "29.5.14",
     "@types/node": "^22.15.2",

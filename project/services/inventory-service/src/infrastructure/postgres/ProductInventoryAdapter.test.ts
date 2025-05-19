@@ -6,6 +6,8 @@ import {
 import { execSync } from "child_process";
 import { ProductInventoryAdapter } from "./ProductInventoryAdapter";
 import { ProductInventory } from "../../domain/model/ProductInventoryModel";
+import { SKU } from "../../domain/value-objects/SKU";
+import { Quantity } from "../../domain/value-objects/Quantity";
 
 // Increase timeout for container startup
 jest.setTimeout(10000);
@@ -80,36 +82,40 @@ describe("InventoryRepositoryPostgres", () => {
     });
 
     it("should return inventory for existing SKU", async () => {
-      const inventory = new ProductInventory("TEST123", 10);
+      const sku = SKU.of("AAA-1234-BB");
+      const inventory = new ProductInventory(sku, 10);
       await repo.save(inventory);
 
-      const result = await repo.getBySku("TEST123");
+      const result = await repo.getBySku("AAA-1234-BB");
       expect(result).not.toBeNull();
-      expect(result!.sku).toBe("TEST123");
+      expect(result!.sku.toString()).toBe("AAA-1234-BB");
       expect(result!.getAvailable()).toBe(10);
     });
   });
 
   describe("save", () => {
     it("should save new inventory", async () => {
-      const inventory = new ProductInventory("NEW123", 5);
+      const sku = SKU.of("AAA-1234-BB");
+      const inventory = new ProductInventory(sku, 5);
       await repo.save(inventory);
 
-      const result = await repo.getBySku("NEW123");
+      const result = await repo.getBySku("AAA-1234-BB");
       expect(result).not.toBeNull();
       expect(result!.getAvailable()).toBe(5);
     });
 
     it("should update existing inventory", async () => {
-      const inventory = new ProductInventory("UPDATE123", 10);
+      const sku = SKU.of("AAA-1234-CC");
+      const quantity = Quantity.of(10);
+      const inventory = new ProductInventory(sku, 10);
       await repo.save(inventory);
 
-      inventory.reserve(3);
+      inventory.reserve(quantity);
       await repo.save(inventory);
 
-      const result = await repo.getBySku("UPDATE123");
+      const result = await repo.getBySku("AAA-1234-CC");
       expect(result).not.toBeNull();
-      expect(result!.getAvailable()).toBe(7);
+      expect(result!.getAvailable()).toBe(0);
     });
   });
 });
