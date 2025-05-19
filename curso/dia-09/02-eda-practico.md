@@ -11,7 +11,6 @@ Hoy, nos centramos en la **robustez y la observabilidad** de estos sistemas, uti
 **`docker-compose.yml`:**
 
 ```yaml
-version: "3.8"
 services:
   rabbitmq:
     image: rabbitmq:4.1-management # Usamos una versión con interfaz de gestión
@@ -30,12 +29,11 @@ volumes:
 
 1. Crear una nueva carpeta e iniciar proyecto Node.js: `npm init -y`.
 2. Instalar las dependencias del proyecto Node.js: `npm install amqplib`.
-3. Crear un archivo `producer.ts` y un archivo `consumer.ts`.
-4. Pueden acceder a la interfaz de gestión de RabbitMQ en `http://localhost:15672` (user: `user`, pass: `password`) para ver exchanges, colas y mensajes.
+3. Pueden acceder a la interfaz de gestión de RabbitMQ en `http://localhost:15672` (user: `user`, pass: `password`) para ver exchanges, colas y mensajes.
 
 ---
 
-## Módulo 1: Manejo Avanzado de Errores y Retries en RabbitMQ (45 minutos)
+## Módulo 1: Manejo Avanzado de Errores y Retries en RabbitMQ
 
 En un mundo ideal, los mensajes siempre se procesan correctamente. En la realidad, las redes fallan, los servicios externos no responden, los datos pueden ser inesperados. Necesitamos estrategias para manejar estos fallos con gracia.
 
@@ -63,7 +61,8 @@ graph TD
     DLQ --> M[Monitor / Analisis]
 ```
 
-**Ejercicio: Configurando una DLX (10 min):**
+**Ejercicio: Configurando una DLX:**
+
 Crear un productor que envíe un mensaje, y un consumidor que lo rechace sistemáticamente, enviándolo a una DLQ.
 
 **Pasos:**
@@ -451,9 +450,9 @@ export function upcastTaskAssigned(eventData: any): TaskAssignedV2 {
 
 ---
 
-**Módulo 3: Trazabilidad y Observabilidad Básica con OpenTelemetry (25 minutos)**
+**Módulo 3: Trazabilidad y Observabilidad Básica con OpenTelemetry**
 
-- **Narrativa y Conceptos (5 min):**
+- **Narrativa y Conceptos:**
 
   - "A medida que nuestros sistemas EDA crecen, entender el flujo de un evento a través de múltiples servicios se vuelve complejo. ¿Dónde se originó un problema? ¿Cuánto tiempo tarda cada paso?"
   - "La **observabilidad** nos da las herramientas para responder esto. Tres pilares clave:"
@@ -462,9 +461,9 @@ export function upcastTaskAssigned(eventData: any): TaskAssignedV2 {
     - **Trazas Distribuidas:** Siguen una solicitud/evento a medida que viaja por diferentes servicios, mostrando la relación causal y los tiempos.
   - "**OpenTelemetry (OTel)** es un estándar abierto y un conjunto de herramientas para instrumentar nuestras aplicaciones y generar telemetría (trazas, métricas, logs)."
 
-- **Introducción a OpenTelemetry con RabbitMQ (Node.js) (15 min):**
+- **Introducción a OpenTelemetry con RabbitMQ (Node.js):**
 
-  - **Instrumentación Básica (5 min):**
+  - **Instrumentación Básica:**
 
     - "OTel proporciona SDKs e instrumentaciones automáticas para bibliotecas comunes. Para Node.js, `instrumentation-amqplib` puede capturar automáticamente operaciones de RabbitMQ (publicar, consumir) como 'spans' (unidades de trabajo en una traza)."
     - "Necesitaremos un 'exporter' para enviar esta telemetría a un backend de observabilidad (ej. Jaeger, Zipkin, Prometheus, o un colector OTel que luego enruta)."
@@ -548,7 +547,7 @@ service:
       exporters: [logging] # , jaeger]
 ```
 
-- **Propagación de Contexto (5 min):**
+- **Propagación de Contexto:**
 
   - "Para que una traza abarque múltiples servicios (productor -\> broker -\> consumidor), el 'contexto de la traza' (trace ID, span ID) debe propagarse. Generalmente se hace a través de cabeceras de mensajes (ej. `traceparent` del estándar W3C Trace Context)."
   - "La instrumentación de `amqplib` a menudo intenta hacer esto automáticamente. Al publicar, inyecta cabeceras. Al consumir, las extrae."
@@ -574,7 +573,7 @@ service:
 
   - "La idea es que el `span` del consumidor sea hijo del `span` del productor, formando una traza completa."
 
-- **Demostración/Ejercicio Ligero Opcional (5 min):**
+- **Demostración/Ejercicio Ligero Opcional:**
 
   - **Objetivo:** (Si el tiempo y la configuración lo permiten) Ver una traza simple de un mensaje RabbitMQ.
   - **Pasos:**
@@ -586,7 +585,7 @@ service:
     6.  (Avanzado si hay tiempo y un backend como Jaeger) "Si tienen Jaeger configurado, busquen la traza allí."
   - **Nota:** "Este ejercicio puede ser más una demostración guiada por el instructor debido al tiempo y la complejidad de la configuración inicial de OTel."
 
-- **Ideas para Dashboards y Alertas (5 min):**
+- **Ideas para Dashboards y Alertas:**
 
   - "Una vez que tenemos métricas y trazas, podemos visualizarlas."
   - **Métricas Clave para EDA:**
@@ -604,7 +603,7 @@ service:
 
 ---
 
-**Conclusión y Próximos Pasos (5 minutos)**
+**Conclusión y Próximos Pasos**
 
 - **Narrativa del Instructor:**
   - "¡Felicidades por completar este segundo día intensivo\! Hoy hemos hecho nuestros sistemas EDA mucho más robustos y hemos sentado las bases para entender lo que sucede en ellos."
