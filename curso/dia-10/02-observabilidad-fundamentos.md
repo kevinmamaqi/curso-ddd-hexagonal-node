@@ -1,12 +1,43 @@
-# Clase: Observabilidad en Node.js y Microservicios (2h 30m)
+# Clase: Observabilidad en Node.js y Microservicios
+
+Mapa rápido del tool‑chain (¿qué es cada cosa y para qué sirve?)
+
+| Herramienta                     | Rol en el stack                                                                                                           | ¿Por qué la elegimos en 2025?                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Prometheus**                  | Base de datos de series temporales (TSDB). *Scrapea* métricas vía HTTP y da un potente lenguaje de consulta (**PromQL**). | Estándar CNCF, pull‑based → menos *overhead*, enorme ecosistema de *exporters* y *rules* reutilizables.  |
+| **Grafana**                     | UI unificada: dashboards, alertas, exploración de métricas/logs/trazas.                                                   | Abstrae múltiples *back‑ends*; paneles listos, alertas visuales y enlaces cruzados.                      |
+| **Loki**                        | Almacén de logs indexados por etiquetas en vez de por texto completo.                                                     | Consumir logs baratos (S3, local), mismo modelo de etiquetas que Prometheus ⇒ consultas coherentes.      |
+| **Tempo**                       | Almacén de trazas distribuido y altamente escalable (sucesor de Jaeger/Zipkin).                                           | Soporta OTLP nativo, sin necesidad de índices costosos; se integra directo en Grafana.                   |
+| **OpenTelemetry (OTEL)**        | Estándar vendor‑neutral para instrumentar aplicaciones (API + SDK + *spec*).                                              | "Instrumenta una vez, exporta a cualquiera"; comunidad activa, versión 1.0 estable.                      |
+| **Promtail**                    | Agente *daemon* que lee ficheros de log y los envía a Loki con etiquetas.                                                 | Config YAML sencilla, sin *sidecar* pesado (a diferencia de Logstash o Fluend).                          |
+| **OTEL Collector** *(opcional)* | Proxy/roteador que recibe telemetría, transforma y re‑exporta a uno o varios *back‑ends*.                                 | Desacopla tu app de la infraestructura de observabilidad; centraliza *sampling*, *batching* y seguridad. |
+| **Docker Compose**              | Orquestador local para levantar todo el stack rápidamente.                                                                | Nada de instalar cada pieza a mano; reproducible por los alumnos en cualquier OS.                        |
+
+### 0.1 Cómo se relacionan entre sí
+
+```mermaid
+flowchart TB
+    subgraph "Aplicación Node.js"
+        direction LR
+        App[Código instrumentado<br/>con OTEL SDK]
+    end
+
+    App -- Logs --> Loki[(Loki)]
+    App -- Métricas --> Prometheus[(Prometheus)]
+    App -- Trazas (OTLP) --> Tempo[(Tempo)]
+    App -. opcional .-> Collector[OTEL Collector]
+
+    Loki --> Grafana[Grafana UI]
+    Prometheus --> Grafana
+    Tempo --> Grafana
+```
+
+* Prometheus *tira* de las métricas cada N segundos; Loki y Tempo **reciben** push desde los agentes/SDK.
+* Grafana no almacena datos; sólo los visualiza y correlaciona.
+
+
 
 **Objetivo General:** Al finalizar esta clase queremos comprender los conceptos fundamentales de la observabilidad, cómo instrumentar aplicaciones Node.js con OpenTelemetry y utilizar herramientas como Grafana, Loki y Prometheus para monitorear, depurar y analizar el comportamiento de microservicios.
-
-Requisitos Previos:
-
-- Conocimientos básicos de Node.js y desarrollo de APIs.
-- Conocimientos básicos de Docker y Docker Compose.
-- Conocimientos básicos de Git.
 
 ## Parte 1: Fundamentos de la Observabilidad
 
@@ -115,7 +146,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
   grafana:
-    image: grafana/grafana:10.0.0
+    image: grafana/grafana:12.0.0
     ports:
       - "3000:3000"
     environment:
@@ -123,18 +154,53 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
     volumes: # Para persistir dashboards y datasources
       - grafana-data:/var/lib/grafana
-# --- Opcional: App Node.js simple para generar logs ---
-#  my_node_app:
-#    build: ./my-node-app # Directorio con Dockerfile y app.js
-#    ports:
-#      - "3001:3001"
-#    logging: # Para que Promtail pueda acceder a los logs de Docker
-#      driver: "json-file"
-#      options:
-#        max-size: "10m"
-#        max-file: "3"
+
 volumes:
   grafana-data:
+```
+
+`promtail-local-config.yml`:
+
+```yaml
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*.log
+```
+
+`prometheus.yml`:
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  - job_name: promtail
+    static_configs:
+      - targets: ["promtail:9080"]
 ```
 
 1. Levantar el Stack:
@@ -147,14 +213,38 @@ docker-compose up -d
 
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
-- Loki (API, no UI por defecto): `http://localhost:3100/ready` (debería dar "ready")
+- Loki (API, no UI por defecto): `http://localhost:3100/ready` (debería dar "ready"). Puede tardar hasta 15 segundos en estar listo. Probar con `curl -i http://localhost:3100/ready`
 
-3.  Generar Logs de Ejemplo (si no tienes una app en el compose):
+3.  Generar Logs de Ejemplo:
 
-Puedes usar un script `server-error.js` como mencionaste, o simplemente hacer logs desde un contenedor existente. Si tienes una app Node.js en el `docker-compose.yml`:
+Crear un archivo `example-log-generator.ts`:
 
-```bash
-docker exec -it <nombre_contenedor_node_app> node -e "console.log('INFO: Test log from app'); console.error('ERROR: Simulated error from app');"
+```ts
+import fs from "fs";
+import path from "path";
+
+const logFile = path.join(__dirname, "app.log");
+
+function log(message: string) {
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(logFile, `[${timestamp}] ${message}\n`);
+}
+
+setInterval(() => {
+  log("Mensaje de log de ejemplo generado por TypeScript");
+}, 5000);
+```
+
+Configurar promtail para que recolecte logs de `app.log`:
+
+```yaml
+scrape_configs:
+  - job_name: typescript-logger
+    static_configs:
+      - targets: ["localhost"]
+        labels:
+          job: typescript_logger
+          __path__: /app/app.log
 ```
 
 4.  Explorar Logs en Grafana:
@@ -162,7 +252,7 @@ docker exec -it <nombre_contenedor_node_app> node -e "console.log('INFO: Test lo
 - Ir a Grafana (`http://localhost:3000`).
 - Sección "Explore".
 - Seleccionar "Loki" como datasource (puede requerir configuración inicial si no está auto-detectado: URL `http://loki:3100`).
-  - Probar query: `{container_name="observability-node-workshop-my_node_app-1"} |= "ERROR"` o similar (el nombre del contenedor puede variar).
+  - Probar query: `filename = "app.log"` o similar.
 
 ---
 
@@ -222,39 +312,41 @@ npm install @opentelemetry/api @opentelemetry/sdk-node \
 3.  Crear archivo `tracing.ts` (o similar) para configurar el SDK:
 
 ```typescript
-// src/tracing.ts
+// tracing.ts
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-// import { JaegerExporter } from '@opentelemetry/exporter-jaeger'; // Alternative
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 
-// Para debugging de OTEL mismo (opcional)
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO);
+// Allow customization via env vars
+const serviceName = process.env.OTEL_SERVICE_NAME || "my-node-app-typescript";
+const otlpEndpoint =
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318";
 
-// Configurar el exportador de trazas (OTLP HTTP para Tempo o Collector)
+// Setup OTLP exporters
 const traceExporter = new OTLPTraceExporter({
-  url: "http://localhost:4318/v1/traces", // Puerto OTLP HTTP por defecto para Tempo/Collector
+  url: `${otlpEndpoint}/v1/traces`,
 });
-// Alternativa: Jaeger Exporter
-// const traceExporter = new JaegerExporter({ endpoint: 'http://localhost:14268/api/traces' });
+const metricExporter = new OTLPMetricExporter({
+  url: `${otlpEndpoint}/v1/metrics`,
+});
 
-const sdk = new NodeSDK({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: "my-node-app-typescript", // Nombre de tu servicio
+// Initialize SDK with batching and auto-instrumentation
+export const sdk = new NodeSDK({
+  resource: resourceFromAttributes({
+    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
   }),
   traceExporter,
-  instrumentations: [
-    getNodeAutoInstrumentations(),
-    // Opcional: Configurar instrumentaciones específicas
-    // {
-    //   '@opentelemetry/instrumentation-fs': {
-    //     enabled: false, // ejemplo: deshabilitar instrumentación de 'fs'
-    //   },
-    // }
-  ],
+  metricReader: new PeriodicExportingMetricReader({
+    exporter: metricExporter,
+    exportIntervalMillis: 60_000, // export metrics every minute
+  }),
+  instrumentations: [getNodeAutoInstrumentations()],
+  spanProcessor: new BatchSpanProcessor(traceExporter),
 });
 
 try {
@@ -264,86 +356,75 @@ try {
   console.error("Error starting OpenTelemetry SDK:", error);
 }
 
-// Manejo elegante del cierre
+// Graceful shutdown
 process.on("SIGTERM", () => {
   sdk
     .shutdown()
-    .then(() => console.log("Tracing terminated"))
-    .catch((error) => console.log("Error terminating tracing", error))
+    .then(() => console.log("Tracing and metrics terminated"))
+    .catch((err) => console.error("Error terminating OTEL SDK", err))
     .finally(() => process.exit(0));
 });
-
-// Exportar el SDK puede ser útil si necesitas acceder a él en otras partes (raro para el SDK en sí)
-// export default sdk; // No es común exportar el SDK directamente así
 ```
 
-4.  Modificar `app.ts` para cargar `tracing.ts` al inicio:
+4.  Crear `app.ts` para cargar `tracing.ts` al inicio:
 
 ```typescript
-// src/app.ts
+import "./tracing"; // ensure OTEL SDK is initialized
+import Fastify, { FastifyRequest, FastifyReply } from "fastify";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 
-// Si no usas -r para precargar tracing.ts, impórtalo aquí al inicio.
-// import './tracing'; // Asegúrate que tracing.ts se ejecute primero.
-// Si tracing.ts se compila y se carga con -r, esta línea no es necesaria.
+const app = Fastify({ logger: true });
+const port = Number(process.env.PORT) || 3002;
 
-import express, { Request, Response, NextFunction } from "express";
-import { trace, Span, Context, SpanStatusCode } from "@opentelemetry/api";
-
-const app = express();
-const port: number = 3002;
-
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World with OTEL in TypeScript!");
-});
-
-app.get("/fast", (req: Request, res: Response) => {
-  res.send("Fast response in TypeScript!");
-});
-
-app.get("/slow", async (req: Request, res: Response) => {
-  // Obtener el tracer
-  const tracer = trace.getTracer("my-custom-tracer-typescript");
-  const parentSpan: Span | undefined = trace.getSpan(
-    trace.getActiveSpanContext()
-  );
-
-  // Iniciar un nuevo span como hijo del span activo (si existe)
-  // o como un nuevo span raíz si no hay contexto de span activo.
-  const span: Span = tracer.startSpan(
-    "complex-operation-typescript",
-    undefined,
-    parentSpan ? trace.setSpan(trace.getActiveContext(), parentSpan) : undefined
-  );
+// Helper for manual traced operations
+async function manualTraceOperation(reply: FastifyReply) {
+  const tracer = trace.getTracer("app-tracer");
+  const span = tracer.startSpan("complex-operation", {
+    attributes: { "custom.attribute": "exampleValue" },
+  });
 
   try {
-    span.setAttribute("custom.attribute.ts", "exampleValueTS");
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Simula I/O
-    span.addEvent("Sub-operation A (TS) complete");
-    await new Promise((resolve) => setTimeout(resolve, 150)); // Simula más I/O
+    // simulate work
+    await new Promise((r) => setTimeout(r, 100));
+    span.addEvent("sub-operation-A-complete");
+    await new Promise((r) => setTimeout(r, 150));
 
-    // Simular un error en un span
+    // random error simulation
     if (Math.random() < 0.2) {
-      // 20% de probabilidad de error
-      throw new Error("Simulated internal error in slow operation");
+      throw new Error("Simulated internal error");
     }
 
     span.setStatus({ code: SpanStatusCode.OK });
-    res.send("Slow response after complex TypeScript operation!");
-  } catch (error: any) {
-    span.setStatus({
-      code: SpanStatusCode.ERROR,
-      message: error.message,
-    });
-    span.recordException(error); // Registrar la excepción en el span
-    res.status(500).send(`Error in slow operation: ${error.message}`);
+    reply.send({ message: "Response after manual traced operation" });
+  } catch (err: any) {
+    span.recordException(err);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+    reply.status(500).send({ error: err.message });
   } finally {
-    span.end(); // Siempre asegúrate de finalizar el span
+    span.end();
   }
+}
+
+// Routes
+app.get("/", async (_req, reply) => {
+  reply.send({ message: "Hello World with OTEL!" });
 });
 
-app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+app.get("/fast", async (_req, reply) => {
+  reply.send({ message: "Fast response!" });
 });
+
+app.get("/slow", async (_req, reply) => {
+  await manualTraceOperation(reply);
+});
+
+app
+  .listen({ port, host: "0.0.0.0" })
+  .then(() => app.log.info(`Server listening on port ${port}`))
+  .catch((err) => {
+    app.log.error(err);
+    process.exit(1);
+  });
 ```
 
 5.  Añadir Tempo al `docker-compose.yml` (si no estaba):
@@ -351,7 +432,7 @@ app.listen(port, () => {
 ```yaml
 # ... (otros servicios)
 tempo:
-  image: grafana/tempo:1.5.0
+  image: grafana/tempo:2.7.2
   command: ["-config.file=/etc/tempo.yaml"]
   volumes:
     - ./tempo-config.yaml:/etc/tempo.yaml # Configuración básica de Tempo
@@ -386,7 +467,7 @@ storage:
 
 6.  Reiniciar Docker Compose:
 
-`docker-compose up -d --force-recreate`
+`docker compose up -d --force-recreate`
 
 7.  Ejecutar la app Node.js:
 
@@ -446,73 +527,69 @@ npm install @opentelemetry/exporter-prometheus @opentelemetry/sdk-metrics
 2.  Modificar `tracing.ts` para añadir el exportador de métricas:
 
 ```typescript
-// src/tracing.ts
+// tracing.ts
 import { NodeSDK } from "@opentelemetry/sdk-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-http";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
+// import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus";
-import {
-  MeterProvider,
-  PeriodicExportingMetricReader,
-} from "@opentelemetry/sdk-metrics"; // Actualizado
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
 
-// diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG); // Para más detalle si es necesario
+// Environment-based configuration
+const SERVICE_NAME = process.env.OTEL_SERVICE_NAME || "my-node-app-typescript";
+const OTLP_ENDPOINT =
+  process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318";
 
-const serviceName = "my-node-app-typescript";
-
-// Configurar el exportador de trazas
+// Trace exporter and processor
 const traceExporter = new OTLPTraceExporter({
-  url: "http://localhost:4318/v1/traces",
+  url: `${OTLP_ENDPOINT}/v1/traces`,
+});
+const spanProcessor = new BatchSpanProcessor(traceExporter);
+
+// Metric exporter and reader
+const metricExporter = new OTLPMetricExporter({
+  url: `${OTLP_ENDPOINT}/v1/metrics`,
 });
 
-// Configurar el exportador de métricas para Prometheus
+// Metric reader
+// const metricReader = new PeriodicExportingMetricReader({
+//   exporter: metricExporter,
+//   exportIntervalMillis: 60_000, // export metrics every minute
+// });
+
+// Prometheus Exporter
 const prometheusExporter = new PrometheusExporter(
-  {
-    // port: PrometheusExporter.DEFAULT_OPTIONS.port, // 9464 por defecto
-    // endpoint: PrometheusExporter.DEFAULT_OPTIONS.endpoint, // /metrics por defecto
-  },
-  () => {
-    console.log(
-      `Prometheus metrics server running on http://localhost:<span class="math-inline">\{PrometheusExporter\.DEFAULT\_OPTIONS\.port\}</span>{PrometheusExporter.DEFAULT_OPTIONS.endpoint}`
-    );
-  }
+  { port: 9464, endpoint: "/metrics" },
+  () => console.log(`Metrics available at http://localhost:9464/metrics`)
 );
-// Crear un MeterProvider
-const meterProvider = new MeterProvider({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-  }),
-});
 
-// Registrar el MetricReader con el MeterProvider
-// PeriodicExportingMetricReader es necesario si el exporter no es pull-based como Prometheus
-// Para PrometheusExporter, que es pull-based, se registra directamente.
-meterProvider.addMetricReader(prometheusExporter);
-
-const sdk = new NodeSDK({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+// Initialize the SDK with both tracing and metrics
+export const sdk = new NodeSDK({
+  resource: resourceFromAttributes({
+    [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
   }),
   traceExporter,
-  meterProvider, // Asociar el MeterProvider con el SDK
+  spanProcessor,
+  metricReader: prometheusExporter,
   instrumentations: [getNodeAutoInstrumentations()],
 });
 
 try {
   sdk.start();
-  console.log("OpenTelemetry SDK with Metrics started...");
+  console.log("OpenTelemetry SDK started...");
 } catch (error) {
   console.error("Error starting OpenTelemetry SDK:", error);
 }
 
+// Graceful shutdown
 process.on("SIGTERM", () => {
   sdk
     .shutdown()
-    .then(() => console.log("Tracing and Metrics terminated"))
-    .catch((error) => console.log("Error terminating OTEL SDK", error))
+    .then(() => console.log("Tracing and metrics terminated"))
+    .catch((err) => console.error("Error terminating OTEL SDK", err))
     .finally(() => process.exit(0));
 });
 ```
@@ -522,91 +599,92 @@ _Nota:_ La configuración de métricas con OTEL puede ser un poco más compleja 
 1.  Instrumentar una métrica de negocio en `app.js`:
 
 ```javascript
-// src/app.ts
-// ... (imports de express, etc.)
-import { trace, metrics, Counter, Attributes } from '@opentelemetry/api'; // Añadir metrics, Counter, Attributes
-// ... (resto de imports y setup de Express)
+import "./tracing"; // ensure OTEL SDK is initialized
+import Fastify, { FastifyRequest, FastifyReply } from "fastify";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
 
-const app = express();
-const port: number = 3002;
+// NEW: metrics API
+import { metrics, MetricAttributes } from "@opentelemetry/api";
 
-// Obtener un Meter del MeterProvider configurado globalmente por el SDK
-const meter = metrics.getMeter('my-node-app-business-metrics-ts');
+// create a Meter (namespaces your metrics)
+const meter = metrics.getMeter("my-node-app-business");
 
-const ordersCounter: Counter = meter.createCounter('orders.total.ts', {
-    description: 'Total number of orders processed (TypeScript)',
-    unit: '1',
-});
-const successfulPaymentsCounter: Counter = meter.createCounter('payments.successful.total.ts', {
-    description: 'Total successful payments (TypeScript)',
-});
-const failedPaymentsCounter: Counter = meter.createCounter('payments.failed.total.ts', {
-    description: 'Total failed payments (TypeScript)',
+// define a Counter for “successful operations”
+const successCounter = meter.createCounter("complex_operation_success_total", {
+  description: "Total number of successfully completed complex operations",
 });
 
-// Middleware para parsear JSON bodies si haces POST con JSON
-app.use(express.json());
-// Middleware para parsear URL-encoded bodies (para query params o form data)
-app.use(express.urlencoded({ extended: true }));
+// define a Histogram for operation durations (in milliseconds)
+const latencyHistogram = meter.createHistogram(
+  "complex_operation_duration_ms",
+  {
+    description: "Duration of complex-operation in milliseconds",
+  }
+);
 
+const app = Fastify({ logger: true });
+const port = Number(process.env.PORT) || 3002;
 
-app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World with OTEL and Metrics in TypeScript!');
-});
+// Helper for manual traced operations
+async function manualTraceOperation(reply: FastifyReply) {
+  const tracer = trace.getTracer("app-tracer");
+  const span = tracer.startSpan("complex-operation", {
+    attributes: { "custom.attribute": "exampleValue" },
+  });
 
-// ... (otros endpoints como /fast, /slow)
+  const start = Date.now();
 
-app.post('/checkout', (req: Request, res: Response) => {
-    // Para este ejemplo, tomaremos el estado del query param o del body
-    const successQuery = req.query.success as string | undefined;
-    const successBody = req.body.success as boolean | undefined;
-    let isSuccess: boolean;
+  try {
+    // simulate work
+    await new Promise((r) => setTimeout(r, 100));
+    span.addEvent("sub-operation-A-complete");
+    await new Promise((r) => setTimeout(r, 150));
 
-    if (successQuery !== undefined) {
-        isSuccess = successQuery === 'true';
-    } else if (successBody !== undefined) {
-        isSuccess = successBody;
-    } else {
-        // Default a fallo si no se especifica
-        isSuccess = false;
-        console.warn("Checkout 'success' parameter not provided, defaulting to failure.");
+    // random error simulation
+    if (Math.random() < 0.2) {
+      throw new Error("Simulated internal error");
     }
 
-    const orderAttributes: Attributes = {
-        'order.type': 'online_ts',
-        'customer.tier': Math.random() > 0.5 ? 'gold' : 'silver', // Ejemplo de otro atributo
-    };
-    ordersCounter.add(1, orderAttributes);
+    // ✅ business metric: count one success
+    successCounter.add(1, { outcome: "success" } as MetricAttributes);
 
-    if (isSuccess) {
-        successfulPaymentsCounter.add(1, { 'payment.currency': 'USD' });
-        res.status(200).send('Checkout successful (TypeScript)!');
-    } else {
-        failedPaymentsCounter.add(1, { 'payment.currency': 'USD', 'failure.reason': 'simulated_decline_ts' });
-        res.status(400).send('Checkout failed (TypeScript)!'); // Usar 400 para error de cliente
-    }
+    span.setStatus({ code: SpanStatusCode.OK });
+    reply.send({ message: "Response after manual traced operation" });
+  } catch (err: any) {
+    successCounter.add(0, { outcome: "failure" } as MetricAttributes);
+
+    span.recordException(err);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+    reply.status(500).send({ error: err.message });
+  } finally {
+    const duration = Date.now() - start;
+    latencyHistogram.record(duration, { route: "/slow" } as MetricAttributes);
+
+    span.end();
+  }
+}
+
+// Routes
+app.get("/", async (_req, reply) => {
+  reply.send({ message: "Hello World with OTEL!" });
 });
 
-// Endpoint para simular errores 5xx que serán capturados por la instrumentación HTTP automática
-app.get('/error', (req: Request, res: Response) => {
-    try {
-        throw new Error("This is a simulated server error for alerts!");
-    } catch (e: any) {
-        // La instrumentación automática de HTTP debería capturar esto y marcarlo como error.
-        // También puedes registrarlo en el span actual si lo deseas.
-        const currentSpan = trace.getSpan(trace.getActiveSpanContext());
-        if (currentSpan) {
-            currentSpan.recordException(e);
-            currentSpan.setStatus({ code: SpanStatusCode.ERROR, message: e.message });
-        }
-        res.status(500).send(`Simulated server error: ${e.message}`);
-    }
+app.get("/fast", async (_req, reply) => {
+  reply.send({ message: "Fast response!" });
 });
 
-
-app.listen(port, () => {
-    console.log(`App listening at http://localhost:${port}`);
+app.get("/slow", async (_req, reply) => {
+  await manualTraceOperation(reply);
 });
+
+app
+  .listen({ port, host: "0.0.0.0" })
+  .then(() => app.log.info(`Server listening on port ${port}`))
+  .catch((err) => {
+    app.log.error(err);
+    process.exit(1);
+  });
+
 ```
 
 1.  Configurar Prometheus para scrapear la app Node.js:
@@ -616,16 +694,12 @@ app.listen(port, () => {
 ```yaml
 # prometheus.yml
 # ... (global config, alertmanager config)
-scrape_configs:
-  - job_name: "prometheus" # Scrapea Prometheus mismo
+- job_name: 'node-app'
+    metrics_path: '/metrics'
     static_configs:
-      - targets: ["localhost:9090"]
-  - job_name: "my-node-app"
-    static_configs:
-      # Si Node.js corre localmente (fuera de Docker) y Prometheus en Docker:
-      # - targets: ['host.docker.internal:9464']
-      # Si Node.js corre en Docker en la misma red:
-      - targets: ["my_node_app:9464"] # Asumiendo que el servicio Docker se llama my_node_app y expone el puerto 9464 internamente.
+      # - targets: ['localhost:9464']
+      # use host.docker.internal on Docker Desktop (Mac/Windows)
+      - targets: ['host.docker.internal:9464']
 ```
 
 - **Importante:** Si la app Node.js corre fuera de Docker (ej. `node app.js` en tu host), y Prometheus dentro de Docker, `host.docker.internal` es el DNS para acceder al host desde un contenedor Docker (en Mac/Windows). Para Linux, sería la IP del `docker0` bridge o la IP principal del host. Si Node.js también está en un contenedor, usa el nombre del servicio y puerto interno.
@@ -640,14 +714,19 @@ curl -X POST "http://localhost:3002/checkout?success=true"
 curl -X POST "http://localhost:3002/checkout?success=false"
 ```
 
+```bash
+$ curl http://localhost:9464/metrics | grep complex_operation
+complex_operation_success_total{outcome="success"} 42
+complex_operation_duration_ms_bucket{…}
+```
+
 5.  Crear un Dashboard Básico en Grafana:
 
 - Ir a Grafana (`http://localhost:3000`).
 - Asegurar que Prometheus es un datasource (URL `http://prometheus:9090`).
   - Crear un nuevo Dashboard.
   - Añadir panel \> "Time series" o "Stat".
-  - Query 1 (Total Órdenes): `sum(orders_total)` o `sum(rate(orders_total[5m]))` para tasa.
-  - Query 2 (Tasa de Conversión de Pago): `sum(rate(payments_successful_total[1m])) / sum(rate(orders_total{order_type="online"}[1m])) * 100` (esto es un ejemplo, ajustar según las métricas exactas y labels).
+  - Query (Total Órdenes): `sum(orders_total)` o `sum(rate(complex_operation_success_total[5m])) by (outcome)` para tasa.
 
 ---
 
@@ -668,7 +747,7 @@ curl -X POST "http://localhost:3002/checkout?success=false"
 - **Documentación (Runbooks):** ¿Qué hacer cuando salta esta alerta?
 - **Canales de Notificación:** Slack, PagerDuty, email, etc.
 
-**Ejercicio Práctico: Configurar Alerta en Prometheus y Notificación (15m):**
+**Ejercicio Práctico: Configurar Alerta en Prometheus y Notificación:**
 
 1.  Configurar Alertmanager (si no está en `docker-compose.yml`):
 
