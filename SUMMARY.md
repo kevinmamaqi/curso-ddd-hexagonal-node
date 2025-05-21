@@ -55,21 +55,17 @@
   * [00 · Repaso](curso/dia-09/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-09/01-objetivos-del-dia.md)
   * [02 · EDA Práctico](curso/dia-09/02-eda-practico.md)
-  * [03 · Avance Proyecto](curso/dia-09/03-avance-proyecto.md)
 
 * **Día 10 – Observabilidad**
   * [00 · Repaso](curso/dia-10/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-10/01-objetivos-del-dia.md)
   * [02 · Fundamentos de Observabilidad](curso/dia-10/02-observabilidad-fundamentos.md)
-  * [03 · OTel, Prometheus y Grafana](curso/dia-10/03-otel-grafana-prom.md)
-  * [04 · Avance Proyecto](curso/dia-10/04-avance-proyecto.md)
 
 * **Día 11 – Conclusiones & Documentación**
   * [00 · Repaso](curso/dia-11/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-11/01-objetivos-del-dia.md)
-  * [02 · Lecciones Aprendidas](curso/dia-11/02-lecciones-aprendidas.md)
-  * [03 · Documentación C4 & Structurizr](curso/dia-11/03-documentacion-arquitectura.md)
-  * [04 · Avance Proyecto](curso/dia-11/04-avance-proyecto.md)
+  * [02 · C4 Model & Structurizr DSL](curso/dia-11/02-c4-dls.md)
+  * [03 · Avance Proyecto](curso/dia-11/03-avance-proyecto.md)
 
 * **Día 12 – Demo Final y Cierre**
   * [00 · Repaso](curso/dia-12/00-repaso.md)

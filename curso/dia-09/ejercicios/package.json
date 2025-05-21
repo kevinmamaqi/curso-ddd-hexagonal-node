@@ -1,0 +1,24 @@
+{
+  "name": "ejercicios",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup-dlx": "tsx ./ej1-dlx/setup_dlx.ts",
+    "producer": "tsx ./ej1-dlx/producer.ts",
+    "consumer": "tsx ./ej1-dlx/consumer.ts",
+    "retry-consumer": "tsx ./ej2-retry/consumer_retry.tsx"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "amqplib": "0.10.8"
+  },
+  "devDependencies": {
+    "@types/amqplib": "0.10.7",
+    "@types/node": "22.15.19",
+    "tsx": "4.19.4"
+  }
+}
