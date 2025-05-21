@@ -64,9 +64,7 @@
 * **Día 11 – Conclusiones & Documentación**
   * [00 · Repaso](curso/dia-11/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-11/01-objetivos-del-dia.md)
-  * [02 · Lecciones Aprendidas](curso/dia-11/02-lecciones-aprendidas.md)
-  * [03 · Documentación C4 & Structurizr](curso/dia-11/03-documentacion-arquitectura.md)
-  * [04 · Avance Proyecto](curso/dia-11/04-avance-proyecto.md)
+  * [02 · Avance Proyecto](curso/dia-11/02-avance-proyecto.md)
 
 * **Día 12 – Demo Final y Cierre**
   * [00 · Repaso](curso/dia-12/00-repaso.md)
