@@ -64,7 +64,8 @@
 * **Día 11 – Conclusiones & Documentación**
   * [00 · Repaso](curso/dia-11/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-11/01-objetivos-del-dia.md)
-  * [02 · Avance Proyecto](curso/dia-11/02-avance-proyecto.md)
+  * [02 · C4 Model & Structurizr DSL](curso/dia-11/02-c4-dls.md)
+  * [03 · Avance Proyecto](curso/dia-11/03-avance-proyecto.md)
 
 * **Día 12 – Demo Final y Cierre**
   * [00 · Repaso](curso/dia-12/00-repaso.md)
