@@ -11,12 +11,13 @@
       "skipDefaultLibCheck": true,
       "resolveJsonModule": true,
       "rootDir": "src",
-      "outDir": "dist"
+      "outDir": "dist",
+      "types": ["vitest/globals", "node"]
     },
     "exclude": [
       "node_modules",
       "dist"
     ],
-    "include": ["src"]
+    "include": ["src/**/*"]
   }
   

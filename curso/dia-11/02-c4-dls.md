@@ -70,7 +70,7 @@ Structurizr DSL es un lenguaje específico de dominio (DSL) que permite definir 
 
 ### Ejemplos:
 - [Ejemplo 1](https://structurizr.com/share/36141/diagrams#SystemContext)
-- [Ejemplo 2](https://docs.structurizr.com/ui/diagrams/system-landscape-view)
+- [Ejemplo 2](https://docs.structurizr.com/dsl/adrs)
 
 ---
 
