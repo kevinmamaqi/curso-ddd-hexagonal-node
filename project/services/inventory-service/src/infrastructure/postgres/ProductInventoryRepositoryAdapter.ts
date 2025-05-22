@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ProductInventory } from "../../domain/model/ProductInventoryModel";
 import { SKU } from "../../domain/value-objects/SKU";
 import { ProductInventoryPort } from "../../domain/ports/ProductInventoryRepositoryPort";
@@ -15,7 +16,7 @@ export class ProductInventoryAdapter implements ProductInventoryPort {
 
   async save(inventory: ProductInventory): Promise<void> {
     try {
-      await this.prisma.$transaction(async (tx) => {
+      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         await this.createMovement(tx, inventory);
         await this.saveInventory(tx, inventory);
       });
@@ -101,7 +102,7 @@ export class ProductInventoryAdapter implements ProductInventoryPort {
         },
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error instanceof PrismaClientKnownRequestError) {
         throw new Error(
           "Concurrent modification detected. Please retry the operation."
         );

@@ -3,14 +3,16 @@ import Fastify from "fastify";
 import "dotenv/config";
 import { bootstrapContainer, disposeContainer } from "./application/container";
 import { registerInventoryRoutes } from "./infrastructure/http/ProductInventoryRouter";
+import { startTelemetry, stopTelemetry } from "./otel";
 
 export async function buildServer() {
-  const app = Fastify({ logger: true });
+  await startTelemetry();
 
   // Initialize container
   await bootstrapContainer();
 
   // Application routes
+  const app = Fastify({ logger: true });
   await registerInventoryRoutes(app);
 
   app.addHook("onClose", async () => {

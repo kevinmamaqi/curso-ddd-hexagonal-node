@@ -7,13 +7,11 @@ import { ReplenishInventoryUseCase } from "./ReplenishInventoryUseCase";
 import { ProductInventoryEventsAdapter } from "../infrastructure/events/ProductInventoryEventsAdapter";
 import { config } from "../config/config";
 import { CreateInventoryUseCase } from "./CreateInventoryUseCase";
+import { prisma } from "../infrastructure/postgres/PrismaClientProvider";
 
 export const container = createContainer({
   injectionMode: InjectionMode.CLASSIC,
 });
-
-// Create Prisma instance outside container
-const prisma = new PrismaClient();
 
 // Define initialization order
 const INITIALIZATION_ORDER = [

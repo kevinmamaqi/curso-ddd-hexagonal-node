@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "NodeNext", // Or "ES2022", "ESNext", "node16", "node18", "nodenext" (choose based on your target Node.js version)
+    "outDir": "dist",
+    "declaration": true,
+    "emitDeclarationOnly": false,
+    "moduleResolution": "NodeNext" // Or "nodenext"
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}
