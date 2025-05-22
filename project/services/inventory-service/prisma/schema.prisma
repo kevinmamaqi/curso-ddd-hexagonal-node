@@ -7,8 +7,27 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum MovementType {
+    CREATED
+    RESERVE
+    RELEASE
+    REPLENISH
+}
+
 model Inventory {
     id                Int       @id @default(autoincrement())
     sku               String    @unique
     available         Int
+    updatedAt         DateTime  @updatedAt
+    createdAt         DateTime  @default(now())
+}
+
+model Movement {
+    id                Int       @id @default(autoincrement())
+    sku               String
+    movementType      MovementType
+    qty               Int
+    createdAt         DateTime  @default(now())
+    
+    @@index([sku])
 }

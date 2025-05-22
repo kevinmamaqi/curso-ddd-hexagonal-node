@@ -1,24 +1,22 @@
+import { ProductInventory } from "./ProductInventoryModel";
 import { Quantity } from "../value-objects/Quantity";
 import { SKU } from "../value-objects/SKU";
-import { ProductInventory } from "./ProductInventoryModel";
 
 describe("ProductInventoryModel constructor", () => {
   it("should create a product inventory with valid values", () => {
-    const sku = SKU.of("AAA-1234-BB");
-    const i = new ProductInventory(sku, 10);
-    expect(i.sku.toString()).toBe("AAA-1234-BB");
+    const i = new ProductInventory(SKU.of("ABC-1234-AB"), 10);
+    expect(i.sku.toString()).toBe("ABC-1234-AB");
     expect(i.getAvailable()).toBe(10);
   });
 
   it("should throw an error with invalid arguments", () => {
-    const sku = SKU.of("AAA-1234-BB");
-    expect(() => new ProductInventory(sku, -10)).toThrow(
+    expect(() => new ProductInventory(SKU.of("ABC-1234-AB"), -10)).toThrow(
       "Available shoud be equal or higher than 0."
     );
   });
 });
 
-describe("ProductInventoryModel reserve", () => {
+describe("ProductInventoryModel movements", () => {
   let inventory: ProductInventory;
   const sku = SKU.of("AAA-1234-BB");
 
@@ -42,11 +40,11 @@ describe("ProductInventoryModel reserve", () => {
 describe("restock event emission on reserve", () => {
   let inventory: ProductInventory;
   const sku = SKU.of("AAA-1234-BB");
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: vi.SpyInstance;
 
   beforeEach(() => {
     inventory = new ProductInventory(sku, 10);
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -80,5 +78,57 @@ describe("restock event emission on reserve", () => {
     localInventory.reserve(quantityToReserve);
 
     expect(consoleSpy).not.toHaveBeenCalled();
+    inventory = new ProductInventory(SKU.of("ABC-1234-AB"), 10);
+  });
+
+  describe("reserve", () => {
+    it("should decrease available quantity when a reserve happens", () => {
+      inventory.reserve(Quantity.of(5));
+      expect(inventory.getAvailable()).toBe(5);
+      expect(inventory.getLastMovementType()).toBe("RESERVE");
+      expect(inventory.getLastQuantity()).toBe(5);
+    });
+
+    it("should throw an error with negative qty", () => {
+      expect(() => inventory.reserve(Quantity.of(-1))).toThrow(
+        "La cantidad debe ser un número entero positivo."
+      );
+    });
+
+    it("should throw an error with insufficient stock", () => {
+      expect(() => inventory.reserve(Quantity.of(11))).toThrow(
+        "Insufficient product stock"
+      );
+    });
+  });
+
+  describe("release", () => {
+    it("should increase available quantity when a release happens", () => {
+      inventory.release(Quantity.of(5));
+      expect(inventory.getAvailable()).toBe(15);
+      expect(inventory.getLastMovementType()).toBe("RELEASE");
+      expect(inventory.getLastQuantity()).toBe(5);
+    });
+
+    it("should throw an error with negative qty", () => {
+      expect(() => inventory.release(Quantity.of(-1))).toThrow(
+        "La cantidad debe ser un número entero positivo."
+      );
+    });
+  });
+
+  describe("replenish", () => {
+    it("should increase available quantity when a replenish happens", () => {
+      inventory.replenish(Quantity.of(5));
+      expect(inventory.getAvailable()).toBe(15);
+      expect(inventory.getLastMovementType()).toBe("REPLENISH");
+      expect(inventory.getLastQuantity()).toBe(5);
+    });
+
+    it("should throw an error with negative qty", () => {
+      expect(() => inventory.replenish(Quantity.of(-1))).toThrow(
+        "La cantidad debe ser un número entero positivo."
+      );
+    });
   });
 });
