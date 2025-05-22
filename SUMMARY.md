@@ -70,5 +70,4 @@
 * **Día 12 – Demo Final y Cierre**
   * [00 · Repaso](curso/dia-12/00-repaso.md)
   * [01 · Objetivos del Día](curso/dia-12/01-objetivos-del-dia.md)
-  * [02 · Cierre del Proyecto](curso/dia-12/02-cierre-proyecto.md)
-  * [03 · Consejos y Próximos Pasos](curso/dia-12/03-consejos-proximos-pasos.md)
+  * [02 · Avance Proyecto](curso/dia-12/02-avance-proyecto.md)

@@ -1,17 +1,24 @@
 // src/main.ts
 import Fastify from "fastify";
 import "dotenv/config";
-import { container } from "./application/container";
+import { bootstrapContainer, disposeContainer } from "./application/container";
 import { registerInventoryRoutes } from "./infrastructure/http/ProductInventoryRouter";
+import { startTelemetry, stopTelemetry } from "./otel";
 
 export async function buildServer() {
+  await startTelemetry();
+
+  // Initialize container
+  await bootstrapContainer();
+
+  // Application routes
   const app = Fastify({ logger: true });
-
-  //   Initialize container
-  await container.dispose();
-
-  //   Application routes
   await registerInventoryRoutes(app);
+
+  app.addHook("onClose", async () => {
+    // this will run all of your .disposer() callbacks
+    await disposeContainer();
+  });
 
   app.get("/health", async () => ({ status: "ok" }));
   return app;

@@ -1,6 +1,6 @@
 # Avance proyecto
 
-Intentar dejar el inventory-service totalmente operativo, observable y emitiendo eventos de negocio. Cada bloque muestra el porqué, las tareas concretas y la caja de tiempo.
+Intentar dejar el inventory-service totalmente operativo, observable y emitiendo eventos de negocio.
 
 ## Tareas
 
