@@ -1,10 +1,20 @@
-// src/main.ts
 import Fastify from "fastify";
+import { bootstrapContainer, disposeContainer } from "./application/container";
+import { registerRoutes } from "./infrastructure/http/routes";
+import { startTelemetry, stopTelemetry } from "./otel";
 
 export async function buildServer() {
+  await startTelemetry();
+  await bootstrapContainer();
+
   const app = Fastify({ logger: true });
-  // TODO: registrar rutas, plugins, etc.
   app.get("/health", async () => ({ status: "ok" }));
+  registerRoutes(app);
+
+  app.addHook("onClose", async () => {
+    await disposeContainer();
+    await stopTelemetry();
+  });
   return app;
 }
 

@@ -16,8 +16,8 @@ export async function buildServer() {
   await registerInventoryRoutes(app);
 
   app.addHook("onClose", async () => {
-    // this will run all of your .disposer() callbacks
     await disposeContainer();
+    await stopTelemetry();
   });
 
   app.get("/health", async () => ({ status: "ok" }));

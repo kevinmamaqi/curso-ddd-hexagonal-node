@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.json ./
 RUN npm ci
 COPY src/ src/
+COPY scripts/ scripts/
 RUN npm run build
 
 # 2) Production stage
